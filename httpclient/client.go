@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"time"
 )
@@ -14,8 +15,19 @@ var gHttpClient *HttpClient
 
 func init() {
 	gHttpClient = &HttpClient{&http.Client{
-		Timeout:   30 * time.Second,
-		Transport: &http.Transport{DisableKeepAlives: true},
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			DisableKeepAlives:     true,
+			TLSHandshakeTimeout:   5 * time.Second,
+			MaxIdleConns:          1,
+			IdleConnTimeout:       5 * time.Second,
+			ExpectContinueTimeout: 5 * time.Second,
+			DialContext: (&net.Dialer{
+				Timeout:   5 * time.Second,
+				KeepAlive: 5 * time.Second,
+				DualStack: true,
+			}).DialContext,
+		},
 	}}
 }
 

@@ -19,6 +19,7 @@ func Run(containerConfig *container.Config, containerHostConfig *container.HostC
 		return err
 	}
 
+	defer cli.Close()
 	resp, err := cli.ContainerCreate(context.Background(), containerConfig,
 		containerHostConfig, nil, nil, containerName)
 	if err != nil {
@@ -64,6 +65,7 @@ func Remove(containerName string) error {
 		return err
 	}
 
+	defer cli.Close()
 	return cli.ContainerRemove(context.Background(), containerName, types.ContainerRemoveOptions{Force: true})
 }
 
@@ -78,6 +80,7 @@ func CheckProcessIsRunning(ctx *DockerContext) (bool, error) {
 		return false, err
 	}
 
+	defer cli.Close()
 	execResp, err := cli.ContainerExecCreate(context.Background(), ctx.ContainerName, types.ExecConfig{
 		AttachStdin:  true,
 		AttachStdout: true,
