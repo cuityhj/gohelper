@@ -15,7 +15,7 @@ var gHttpClient *HttpClient
 
 func init() {
 	gHttpClient = &HttpClient{&http.Client{
-		Timeout: 10 * time.Second,
+		Timeout: 60 * time.Second,
 		Transport: &http.Transport{
 			DisableKeepAlives:     true,
 			TLSHandshakeTimeout:   5 * time.Second,
