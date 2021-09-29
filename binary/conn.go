@@ -7,15 +7,15 @@ import (
 	"net"
 )
 
-func BinaryExchange(conn net.Conn, req []byte) ([]byte, error) {
-	if err := BinaryWrite(conn, req); err != nil {
+func Exchange(conn net.Conn, req []byte) ([]byte, error) {
+	if err := Write(conn, req); err != nil {
 		return nil, fmt.Errorf("write msg to server failed: %s", err.Error())
 	} else {
-		return BinaryRead(conn)
+		return Read(conn)
 	}
 }
 
-func BinaryWrite(conn net.Conn, req []byte) error {
+func Write(conn net.Conn, req []byte) error {
 	err := encodingbinary.Write(conn, encodingbinary.BigEndian, uint16(len(req)))
 	if err != nil {
 		return fmt.Errorf("write msg size to server failed: %s", err.Error())
@@ -25,7 +25,7 @@ func BinaryWrite(conn net.Conn, req []byte) error {
 	return err
 }
 
-func BinaryRead(conn net.Conn) ([]byte, error) {
+func Read(conn net.Conn) ([]byte, error) {
 	var size uint16
 	err := encodingbinary.Read(conn, encodingbinary.BigEndian, &size)
 	if err != nil {
