@@ -84,6 +84,10 @@ func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) er
 	}
 
 	defer httpResp.Body.Close()
+	if err := checkRespStatusCodeValid(httpResp.StatusCode); err != nil {
+		return err
+	}
+
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		return fmt.Errorf("read http response body failed: %s", err.Error())
@@ -96,4 +100,13 @@ func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) er
 	}
 
 	return nil
+}
+
+func checkRespStatusCodeValid(code int) error {
+	switch code {
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
+		return nil
+	default:
+		return fmt.Errorf("handle http request failed with status code: %d", code)
+	}
 }
