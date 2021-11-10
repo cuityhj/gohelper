@@ -40,31 +40,32 @@ func GetHttpClient() *HttpClient {
 }
 
 type HttpContext struct {
-	URL      string
-	Request  interface{}
-	Response interface{}
+	URL           string
+	Request       interface{}
+	Response      interface{}
+	ResponseError error
 }
 
 func (cli *HttpClient) Post(ctx *HttpContext) error {
-	return cli.request(http.MethodPost, ctx.URL, ctx.Request, ctx.Response)
+	return cli.request(http.MethodPost, ctx)
 }
 
 func (cli *HttpClient) Get(ctx *HttpContext) error {
-	return cli.request(http.MethodGet, ctx.URL, ctx.Request, ctx.Response)
+	return cli.request(http.MethodGet, ctx)
 }
 
 func (cli *HttpClient) Put(ctx *HttpContext) error {
-	return cli.request(http.MethodPut, ctx.URL, ctx.Request, ctx.Response)
+	return cli.request(http.MethodPut, ctx)
 }
 
 func (cli *HttpClient) Delete(ctx *HttpContext) error {
-	return cli.request(http.MethodDelete, ctx.URL, ctx.Request, ctx.Response)
+	return cli.request(http.MethodDelete, ctx)
 }
 
-func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) error {
+func (cli *HttpClient) request(httpMethod string, ctx *HttpContext) error {
 	var httpReqBody io.Reader
-	if req != nil {
-		reqBody, err := json.Marshal(req)
+	if ctx.Request != nil {
+		reqBody, err := json.Marshal(ctx.Request)
 		if err != nil {
 			return fmt.Errorf("marshal request failed: %s", err.Error())
 		}
@@ -72,7 +73,7 @@ func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) er
 		httpReqBody = bytes.NewBuffer(reqBody)
 	}
 
-	httpReq, err := http.NewRequest(httpMethod, url, httpReqBody)
+	httpReq, err := http.NewRequest(httpMethod, ctx.URL, httpReqBody)
 	if err != nil {
 		return fmt.Errorf("new http request failed: %s", err.Error())
 	}
@@ -84,17 +85,27 @@ func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) er
 	}
 
 	defer httpResp.Body.Close()
-	if err := checkRespStatusCodeValid(httpResp.StatusCode); err != nil {
-		return err
-	}
-
 	body, err := ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		return fmt.Errorf("read http response body failed: %s", err.Error())
 	}
 
-	if len(body) > 0 && resp != nil {
-		if err := json.Unmarshal(body, resp); err != nil {
+	if checkRespStatusCodeValid(httpResp.StatusCode) == false {
+		if ctx.ResponseError != nil {
+			if err := json.Unmarshal(body, ctx.ResponseError); err != nil {
+				return fmt.Errorf("unmarshal http response error failed: %s", err.Error())
+			} else {
+				return fmt.Errorf("handle http request failed: %d %s",
+					httpResp.StatusCode, ctx.ResponseError.Error())
+			}
+		} else {
+			return fmt.Errorf("handle http request failed with status code %d",
+				httpResp.StatusCode)
+		}
+	}
+
+	if len(body) > 0 && ctx.Response != nil {
+		if err := json.Unmarshal(body, ctx.Response); err != nil {
 			return fmt.Errorf("unmarshal http response failed: %s", err.Error())
 		}
 	}
@@ -102,11 +113,11 @@ func (cli *HttpClient) request(httpMethod, url string, req, resp interface{}) er
 	return nil
 }
 
-func checkRespStatusCodeValid(code int) error {
+func checkRespStatusCodeValid(code int) bool {
 	switch code {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted, http.StatusNoContent:
-		return nil
+		return true
 	default:
-		return fmt.Errorf("handle http request failed with status code: %d", code)
+		return false
 	}
 }
