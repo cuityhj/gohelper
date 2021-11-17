@@ -7,8 +7,76 @@ import (
 	"net"
 )
 
+type IP net.IP
+
+func (one IP) Cmp(another IP) int {
+	oneIsV4 := net.IP(one).To4() != nil
+	anotherIsV4 := net.IP(another).To4() != nil
+	if oneIsV4 && anotherIsV4 == false {
+		return -1
+	}
+
+	if oneIsV4 == false && anotherIsV4 {
+		return 1
+	}
+
+	if oneIsV4 {
+		return ipv4Cmp(one, another)
+	} else {
+		return ipv6Cmp(one, another)
+	}
+}
+
+func ipv4Cmp(one, another IP) int {
+	oneUint32 := IPv4ToUint32(net.IP(one))
+	anotherUint32 := IPv4ToUint32(net.IP(another))
+	if oneUint32 > anotherUint32 {
+		return 1
+	} else if oneUint32 < anotherUint32 {
+		return -1
+	} else {
+		return 0
+	}
+}
+
+func ipv6Cmp(one, another IP) int {
+	oneBigInt := IPv6ToBigInt(net.IP(one))
+	anotherBigInt := IPv6ToBigInt(net.IP(another))
+	return oneBigInt.Cmp(anotherBigInt)
+}
+
 func IsIpZero(ip net.IP) bool {
 	return ip == nil || ip.IsUnspecified()
+}
+
+func CheckIPsValid(ips ...string) error {
+	for _, ip := range ips {
+		if net.ParseIP(ip) == nil {
+			return fmt.Errorf("invalid ip %s", ip)
+		}
+	}
+
+	return nil
+}
+
+func CheckIPv4sValid(ips ...string) error {
+	for _, ip := range ips {
+		if _, err := parseIP(ip, true); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func CheckIPv6sValid(ips ...string) error {
+	for _, ip := range ips {
+		if _, err := parseIP(ip, false); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func ParseIPv4(ipstr string) (net.IP, error) {
