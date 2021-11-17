@@ -61,7 +61,7 @@ func CheckIPsValid(ips ...string) error {
 
 func CheckIPv4sValid(ips ...string) error {
 	for _, ip := range ips {
-		if _, err := parseIP(ip, true); err != nil {
+		if _, err := ParseIP(ip, true); err != nil {
 			return err
 		}
 	}
@@ -71,7 +71,7 @@ func CheckIPv4sValid(ips ...string) error {
 
 func CheckIPv6sValid(ips ...string) error {
 	for _, ip := range ips {
-		if _, err := parseIP(ip, false); err != nil {
+		if _, err := ParseIP(ip, false); err != nil {
 			return err
 		}
 	}
@@ -80,14 +80,14 @@ func CheckIPv6sValid(ips ...string) error {
 }
 
 func ParseIPv4(ipstr string) (net.IP, error) {
-	return parseIP(ipstr, true)
+	return ParseIP(ipstr, true)
 }
 
 func ParseIPv6(ipstr string) (net.IP, error) {
-	return parseIP(ipstr, false)
+	return ParseIP(ipstr, false)
 }
 
-func parseIP(ipstr string, isv4 bool) (net.IP, error) {
+func ParseIP(ipstr string, isv4 bool) (net.IP, error) {
 	if ip := net.ParseIP(ipstr); ip == nil || (ip.To4() != nil) != isv4 {
 		return nil, fmt.Errorf("invalid ip %s", ipstr)
 	} else {
@@ -110,7 +110,7 @@ func IPv4ToUint32(ip net.IP) uint32 {
 }
 
 func IPv4StrToUint32(ipstr string) (uint32, error) {
-	if ipv4, err := parseIP(ipstr, true); err != nil {
+	if ipv4, err := ParseIP(ipstr, true); err != nil {
 		return 0, err
 	} else {
 		return IPv4ToUint32(ipv4), nil
@@ -133,7 +133,7 @@ func IPv6ToBigInt(ip net.IP) *big.Int {
 }
 
 func IPv6StrToBigInt(ipstr string) (*big.Int, error) {
-	if ipv6, err := parseIP(ipstr, false); err != nil {
+	if ipv6, err := ParseIP(ipstr, false); err != nil {
 		return nil, err
 	} else {
 		return IPv6ToBigInt(ipv6), nil
