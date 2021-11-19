@@ -91,7 +91,11 @@ func ParseIP(ipstr string, isv4 bool) (net.IP, error) {
 	if ip := net.ParseIP(ipstr); ip == nil || (ip.To4() != nil) != isv4 {
 		return nil, fmt.Errorf("invalid ip %s", ipstr)
 	} else {
-		return ip, nil
+		if isv4 {
+			return ip.To4(), nil
+		} else {
+			return ip, nil
+		}
 	}
 }
 
