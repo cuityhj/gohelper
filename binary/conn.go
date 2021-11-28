@@ -7,32 +7,36 @@ import (
 	"net"
 )
 
-func Exchange(conn net.Conn, req []byte) ([]byte, error) {
+func Exchange(conn net.Conn, req []byte, ignoreResp bool) ([]byte, error) {
 	if err := Write(conn, req); err != nil {
-		return nil, fmt.Errorf("write msg to server failed: %s", err.Error())
+		return nil, err
+	} else if ignoreResp {
+		return nil, nil
 	} else {
 		return Read(conn)
 	}
 }
 
 func Write(conn net.Conn, req []byte) error {
-	err := encodingbinary.Write(conn, encodingbinary.BigEndian, uint16(len(req)))
-	if err != nil {
-		return fmt.Errorf("write msg size to server failed: %s", err.Error())
+	if err := encodingbinary.Write(conn, encodingbinary.BigEndian, uint16(len(req))); err != nil {
+		return fmt.Errorf("write msg size failed: %s", err.Error())
+	} else if _, err = conn.Write(req); err != nil {
+		return fmt.Errorf("write msg body failed: %s", err.Error())
+	} else {
+		return nil
 	}
-
-	_, err = conn.Write(req)
-	return err
 }
 
 func Read(conn net.Conn) ([]byte, error) {
 	var size uint16
-	err := encodingbinary.Read(conn, encodingbinary.BigEndian, &size)
-	if err != nil {
-		return nil, fmt.Errorf("read msg size from server failed: %s", err.Error())
+	if err := encodingbinary.Read(conn, encodingbinary.BigEndian, &size); err != nil {
+		return nil, fmt.Errorf("read msg size failed: %s", err.Error())
+	} else {
+		buf := make([]byte, size)
+		if _, err = io.ReadFull(conn, buf); err != nil {
+			return nil, fmt.Errorf("read msg body failed: %s", err.Error())
+		} else {
+			return buf, nil
+		}
 	}
-
-	buf := make([]byte, size)
-	_, err = io.ReadFull(conn, buf)
-	return buf, err
 }
