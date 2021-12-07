@@ -1,4 +1,4 @@
-package hwaddr
+package mac
 
 import "net"
 
