@@ -1,8 +1,8 @@
 package postgresql
 
 import (
-	gorestdb "github.com/zdnscloud/gorest/db"
-	gorestresource "github.com/zdnscloud/gorest/resource"
+	gorestdb "github.com/cuityhj/gorest/db"
+	gorestresource "github.com/cuityhj/gorest/resource"
 )
 
 const ConnStrTemplate = "user=%s password=%s host=%s port=%d database=%s sslmode=disable pool_max_conns=10"

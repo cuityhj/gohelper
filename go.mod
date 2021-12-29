@@ -3,10 +3,10 @@ module github.com/cuityhj/gohelper
 go 1.13
 
 require (
-	github.com/containerd/containerd v1.5.2 // indirect
-	github.com/docker/docker v20.10.7+incompatible
+	github.com/containerd/containerd v1.5.8 // indirect
+	github.com/cuityhj/gorest v1.0.1
+	github.com/docker/docker v20.10.12+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/zdnscloud/gorest v0.0.0-20200519040400-d04098e907f6
-	google.golang.org/grpc v1.38.0 // indirect
+	github.com/opencontainers/image-spec v1.0.2 // indirect
+	google.golang.org/grpc v1.43.0 // indirect
 )
