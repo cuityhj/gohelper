@@ -39,11 +39,13 @@ func Mac48ToEUI64(ip net.IP, mac net.HardwareAddr) (net.IP, error) {
 		return nil, fmt.Errorf("mac address must be 6 bytes")
 	}
 
-	ipv6 := ip.To16()
-	if ipv6 == nil {
+	ip16 := ip.To16()
+	if ip16 == nil {
 		return nil, fmt.Errorf("ip address shorter than 16 bytes")
 	}
 
+	ipv6 := make(net.IP, 16)
+	copy(ipv6, ip16)
 	copy(ipv6[8:11], mac[0:3])
 	copy(ipv6[13:16], mac[3:6])
 	ipv6[8] ^= 0x02
