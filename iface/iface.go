@@ -85,3 +85,36 @@ func GetGlobalUnicastIPs(isv4 bool) ([]string, error) {
 
 	return ips, nil
 }
+
+func GetUnicastIPs(isv4 bool) ([]string, error) {
+	var ips []string
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, iface := range ifaces {
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return nil, err
+		}
+
+		for _, addr := range addrs {
+			if isv4 == false && (iface.Flags&net.FlagMulticast) != net.FlagMulticast {
+				continue
+			}
+
+			ipnet, ok := addr.(*net.IPNet)
+			if ok == false {
+				continue
+			}
+
+			if ip := ipnet.IP; (ip.To4() != nil) == isv4 &&
+				(ip.IsGlobalUnicast() || ip.IsLinkLocalUnicast()) {
+				ips = append(ips, ip.String())
+			}
+		}
+	}
+
+	return ips, nil
+}
