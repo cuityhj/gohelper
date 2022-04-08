@@ -13,7 +13,7 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func Run(containerConfig *container.Config, containerHostConfig *container.HostConfig, containerName string) error {
+func Run(containerConfig *container.Config, containerHostConfig *container.HostConfig, containerName string, timeout time.Duration) error {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func Run(containerConfig *container.Config, containerHostConfig *container.HostC
 		return err
 	case <-runCh:
 		return nil
-	case <-time.After(10 * time.Second):
+	case <-time.After(timeout):
 		return fmt.Errorf("docker run %s timeout", containerName)
 	}
 }
@@ -67,6 +67,16 @@ func Remove(containerName string) error {
 
 	defer cli.Close()
 	return cli.ContainerRemove(context.Background(), containerName, types.ContainerRemoveOptions{Force: true})
+}
+
+func Restart(containerName string, timeout time.Duration) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+
+	defer cli.Close()
+	return cli.ContainerRestart(context.Background(), containerName, &timeout)
 }
 
 type DockerContext struct {
