@@ -131,9 +131,7 @@ func IPv6FromBigInt(bigint *big.Int) net.IP {
 }
 
 func IPv6ToBigInt(ip net.IP) *big.Int {
-	ipv6Int := big.NewInt(0)
-	ipv6Int.SetBytes(ip.To16())
-	return ipv6Int
+	return new(big.Int).SetBytes(ip.To16())
 }
 
 func IPv6StrToBigInt(ipstr string) (*big.Int, error) {
