@@ -5,27 +5,21 @@ import (
 	"regexp"
 )
 
-func ErrorFromCode(code string) error {
-	if err, ok := codeErrors[code]; ok {
-		return err
-	} else {
-		return errors.New("sqlstate code " + code)
-	}
-}
-
 var sqlStateRegexp = regexp.MustCompile(`\(SQLSTATE\s*(\S+)\)`)
 
-func ErrorFromSqlError(err error) error {
-	if err != nil {
-		subValues := sqlStateRegexp.FindAllStringSubmatch(err.Error(), -1)
-		if len(subValues) == 1 && len(subValues[0]) == 2 {
-			return ErrorFromCode(subValues[0][1])
-		} else {
-			return err
-		}
-	} else {
+func Error(err error) error {
+	if err == nil {
 		return nil
 	}
+
+	subValues := sqlStateRegexp.FindAllStringSubmatch(err.Error(), -1)
+	if len(subValues) == 1 && len(subValues[0]) == 2 {
+		if err_, ok := codeErrors[subValues[0][1]]; ok {
+			return err_
+		}
+	}
+
+	return err
 }
 
 var codeErrors = map[string]error{
