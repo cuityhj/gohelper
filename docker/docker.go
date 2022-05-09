@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -81,23 +80,23 @@ func Restart(containerName string, timeout time.Duration) error {
 
 type DockerContext struct {
 	ContainerName string
-	ProcessName   string
+	Command       string
 }
 
-func CheckProcessIsRunning(ctx *DockerContext) (bool, error) {
+func Exec(ctx *DockerContext) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	defer cli.Close()
 	execResp, err := cli.ContainerExecCreate(context.Background(), ctx.ContainerName, types.ExecConfig{
 		AttachStdin:  true,
 		AttachStdout: true,
-		Cmd:          strslice.StrSlice([]string{"ps -ef | grep " + ctx.ProcessName + " | grep -v grep"}),
+		Cmd:          strslice.StrSlice([]string{ctx.Command}),
 	})
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	resp, err := cli.ContainerExecAttach(context.Background(), execResp.ID, types.ExecStartCheck{
@@ -105,14 +104,14 @@ func CheckProcessIsRunning(ctx *DockerContext) (bool, error) {
 		Tty:    false,
 	})
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
 	defer resp.Close()
 	out, err := ioutil.ReadAll(resp.Reader)
 	if err != nil {
-		return false, err
+		return "", err
 	}
 
-	return strings.Contains(string(out), ctx.ProcessName), nil
+	return string(out), nil
 }
