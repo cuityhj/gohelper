@@ -14,7 +14,7 @@ func TestPbe(t *testing.T) {
 		KeyFactoryBase64: keyFactoryBase64,
 		WorkKey:          workKey,
 		Password:         password,
-		Iterator:         10000,
+		Iterator:         DefaultIterator,
 	})
 
 	ut.Assert(t, err == nil, "")
