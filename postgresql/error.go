@@ -140,7 +140,7 @@ var codeErrors = map[string]error{
 	"23001": errors.New("integrity constraint violation: restrict violation (23001)"),
 	"23502": errors.New("integrity constraint violation: not null violation (23502)"),
 	"23503": errors.New("integrity constraint violation: foreign key violation (23503)"),
-	"23505": errors.New("integrity constraint violation: unique violation (23504)"),
+	"23505": errors.New("integrity constraint violation: unique violation (23505)"),
 	"23514": errors.New("integrity constraint violation: check violation (23514)"),
 	"23P01": errors.New("integrity constraint violation: exclusion violation (23P01)"),
 
