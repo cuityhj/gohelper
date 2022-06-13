@@ -123,11 +123,17 @@ func IPv4StrToUint32(ipstr string) (uint32, error) {
 
 func IPv6FromBigInt(bigint *big.Int) net.IP {
 	var ip net.IP
-	if bigint != nil {
-		ip = net.IP(bigint.Bytes())
+	if bigint == nil || len(bigint.Bytes()) > net.IPv6len {
+		return ip
 	}
 
-	return ip
+	bytes := bigint.Bytes()
+	bytesLen := len(bigint.Bytes())
+	for i := 0; i < net.IPv6len-bytesLen; i++ {
+		bytes = append([]byte{0}, bytes...)
+	}
+
+	return net.IP(bytes)
 }
 
 func IPv6ToBigInt(ip net.IP) *big.Int {
