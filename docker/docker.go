@@ -78,6 +78,16 @@ func Restart(containerName string, timeout *int) error {
 	return cli.ContainerRestart(context.Background(), containerName, container.StopOptions{Timeout: timeout})
 }
 
+func Stop(containerName string, timeout *int) error {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return err
+	}
+
+	defer cli.Close()
+	return cli.ContainerStop(context.Background(), containerName, container.StopOptions{Timeout: timeout})
+}
+
 type DockerContext struct {
 	ContainerName string
 	Command       string
