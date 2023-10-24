@@ -73,7 +73,7 @@ func ParseIP(ipstr string, isv4 bool) (net.IP, error) {
 func IPv4FromUint32(i uint32) net.IP {
 	ip := make([]byte, 4)
 	binary.BigEndian.PutUint32(ip, i)
-	return net.IP(ip)
+	return net.IP(ip).To4()
 }
 
 func IPv4ToUint32(ip net.IP) uint32 {
