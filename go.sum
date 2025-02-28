@@ -3,8 +3,8 @@ github.com/Microsoft/go-winio v0.6.1 h1:9/kr64B9VUZrLm5YYwbGtUJnMgqWVOdUAXu6Migc
 github.com/Microsoft/go-winio v0.6.1/go.mod h1:LRdKpFKfdobln8UmuiYcKPot9D2v6svN5+sAH+4kjUM=
 github.com/cuityhj/cement v1.0.0 h1:WqZFvZR1tNh6fsf2JWwPnmM0us/wsSQqDB+xI0XF0fQ=
 github.com/cuityhj/cement v1.0.0/go.mod h1:NvDeneNO2dd4KtoiFPujV1JWYGSGH0YebM/HzliYY9E=
-github.com/cuityhj/gorest v1.0.7 h1:1ycmg/Bdf2xsjNd9295pyAIXfU2ICy03D60+gD0nAwE=
-github.com/cuityhj/gorest v1.0.7/go.mod h1:wURNN0IIovqQJWgcqLpm1P1orRsEGHlOGD5xUpXdgo0=
+github.com/cuityhj/gorest v1.0.8 h1:je1DR4Wg0h+RzimorBzgBGQEwnUMmImwb27lMmcav9E=
+github.com/cuityhj/gorest v1.0.8/go.mod h1:wURNN0IIovqQJWgcqLpm1P1orRsEGHlOGD5xUpXdgo0=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/distribution/reference v0.5.0 h1:/FUIFXtfc/x2gpa5/VGfiGLuOIdYa1t65IKK2OFGvA0=

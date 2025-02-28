@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cuityhj/cement v1.0.0
-	github.com/cuityhj/gorest v1.0.7
+	github.com/cuityhj/gorest v1.0.8
 	github.com/docker/docker v24.0.6+incompatible
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90
 )
