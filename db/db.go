@@ -15,5 +15,9 @@ func NewDBConn(driverName gorestdb.DriverName, resources []gorestresource.Resour
 		return nil, err
 	}
 
+	if driverName == "" {
+		driverName = gorestdb.DriverNamePostgresql
+	}
+
 	return gorestdb.NewRStore(driverName, connStr, meta, dropSchemaList...)
 }
