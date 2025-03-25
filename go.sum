@@ -14,6 +14,8 @@ github.com/cuityhj/gorest v1.0.9-0.20250324112508-a73c44489ade h1:uWe0YlB7LSJqTA
 github.com/cuityhj/gorest v1.0.9-0.20250324112508-a73c44489ade/go.mod h1:GumyZ724SVDyDS0eDSmG6x6dvthu1jXlfUVG/n7qNdk=
 github.com/cuityhj/gorest v1.0.9-0.20250324113859-dc5934bac000 h1:JFqw86dcW6fRYtXIC49q16TztdBEZYoWNAblIHZt6/0=
 github.com/cuityhj/gorest v1.0.9-0.20250324113859-dc5934bac000/go.mod h1:GumyZ724SVDyDS0eDSmG6x6dvthu1jXlfUVG/n7qNdk=
+github.com/cuityhj/gorest v1.0.9-0.20250325073315-5b5407eef191 h1:U0Bi8Mgttz6a4s14Wjis7CuqV42nIB/n2sJKu1cbqtw=
+github.com/cuityhj/gorest v1.0.9-0.20250325073315-5b5407eef191/go.mod h1:GumyZ724SVDyDS0eDSmG6x6dvthu1jXlfUVG/n7qNdk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
