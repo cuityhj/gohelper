@@ -12,21 +12,21 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func Run(containerConfig *container.Config, containerHostConfig *container.HostConfig, containerName string, timeout time.Duration) error {
+func Run(containerConfig *container.Config, containerHostConfig *container.HostConfig, containerName string, timeout time.Duration) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	defer cli.Close()
 	resp, err := cli.ContainerCreate(context.Background(), containerConfig,
 		containerHostConfig, nil, nil, containerName)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if err := cli.ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{}); err != nil {
-		return err
+		return resp.ID, err
 	}
 
 	runCh := make(chan struct{})
@@ -50,11 +50,11 @@ func Run(containerConfig *container.Config, containerHostConfig *container.HostC
 
 	select {
 	case err := <-errCh:
-		return err
+		return resp.ID, err
 	case <-runCh:
-		return nil
+		return resp.ID, nil
 	case <-time.After(timeout):
-		return fmt.Errorf("docker run %s timeout", containerName)
+		return resp.ID, fmt.Errorf("docker run %s timeout", containerName)
 	}
 }
 
