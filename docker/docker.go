@@ -12,6 +12,24 @@ import (
 	"github.com/docker/docker/client"
 )
 
+func ContainerIsRunning(containerId string) (bool, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return false, err
+	}
+
+	stats, err := cli.ContainerInspect(context.Background(), containerId)
+	if err != nil {
+		return false, err
+	}
+
+	if stats.ContainerJSONBase != nil && stats.ContainerJSONBase.State != nil {
+		return stats.ContainerJSONBase.State.Running, nil
+	} else {
+		return false, nil
+	}
+}
+
 func Run(containerConfig *container.Config, containerHostConfig *container.HostConfig, containerName string, timeout time.Duration) (string, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
