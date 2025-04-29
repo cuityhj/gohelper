@@ -12,12 +12,40 @@ import (
 	"github.com/docker/docker/client"
 )
 
-func ContainerIsRunning(containerId string) (bool, error) {
+func ContainerNameIsRunning(containerName string) (bool, error) {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return false, err
 	}
 
+	defer cli.Close()
+	containers, err := cli.ContainerList(context.Background(), types.ContainerListOptions{All: true})
+	if err != nil {
+		return false, err
+	}
+
+	for _, container := range containers {
+		for _, name := range container.Names {
+			if name[1:] == containerName {
+				return ContainerIdIsRunningWithClient(cli, container.ID)
+			}
+		}
+	}
+
+	return false, nil
+}
+
+func ContainerIdIsRunning(containerId string) (bool, error) {
+	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return false, err
+	}
+
+	defer cli.Close()
+	return ContainerIdIsRunningWithClient(cli, containerId)
+}
+
+func ContainerIdIsRunningWithClient(cli *client.Client, containerId string) (bool, error) {
 	stats, err := cli.ContainerInspect(context.Background(), containerId)
 	if err != nil {
 		return false, err
