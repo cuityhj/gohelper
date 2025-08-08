@@ -1,9 +1,61 @@
 package mac
 
 import (
+	"encoding/hex"
 	"fmt"
 	"net"
 )
+
+const (
+	MINMACLENGTH = 12
+	MAXMACLENGTH = 59
+	MAXBUFCAP    = 48
+
+	MACLENGTH12 = 12
+	MACLENGTH16 = 16
+	MACLENGTH40 = 40
+)
+
+func ParseMAC(mac string) (net.HardwareAddr, error) {
+	if l := len(mac); l < MINMACLENGTH || l > MAXMACLENGTH {
+		return nil, fmt.Errorf("mac %s is invalid with length %d not in [12, 59]", mac, l)
+	}
+
+	buf := make([]byte, 0, MAXBUFCAP)
+	count := 0
+	for _, r := range mac {
+		switch {
+		case r >= '0' && r <= '9':
+			buf = append(buf, byte(r))
+			count++
+		case r >= 'A' && r <= 'F':
+			buf = append(buf, byte(r))
+			count++
+		case r >= 'a' && r <= 'f':
+			buf = append(buf, byte(r))
+			count++
+		default:
+			continue
+		}
+
+		if count >= MAXBUFCAP {
+			break
+		}
+	}
+
+	switch count {
+	case MACLENGTH12, MACLENGTH16, MACLENGTH40:
+	default:
+		return nil, fmt.Errorf("mac %s is invalid with chars length %d not in [12, 16, 40]", mac, count)
+	}
+
+	hwaddr := make([]byte, count/2)
+	if _, err := hex.Decode(hwaddr, buf[:count]); err != nil {
+		return nil, fmt.Errorf("parse mac %s failed: %s", mac, err.Error())
+	}
+
+	return net.HardwareAddr(hwaddr), nil
+}
 
 func Mac48ToUint64(mac net.HardwareAddr) uint64 {
 	if len(mac) == 0 {

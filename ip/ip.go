@@ -118,3 +118,13 @@ func IPv6StrToBigInt(ipstr string) (*big.Int, error) {
 		return IPv6ToBigInt(ipv6), nil
 	}
 }
+
+func ParseIPAndVersion(ipstr string) (net.IP, bool, error) {
+	if ip := net.ParseIP(ipstr); ip == nil {
+		return nil, false, fmt.Errorf("invalid ip %s", ipstr)
+	} else if ipv4 := ip.To4(); ipv4 != nil {
+		return ipv4, false, nil
+	} else {
+		return ip, true, nil
+	}
+}
