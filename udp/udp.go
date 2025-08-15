@@ -45,7 +45,10 @@ func (cli *UDPClient) Exchange(request []byte, serverIp net.IP, serverPort uint3
 		return fmt.Errorf("read udp respsonse from addr %s and port %d failed: %s", serverIp, serverPort, err.Error())
 	}
 
-	response.Write(buf[:n])
+	if response != nil {
+		response.Write(buf[:n])
+	}
+
 	return nil
 }
 
