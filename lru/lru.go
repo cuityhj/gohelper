@@ -10,6 +10,7 @@ type Record interface {
 	IsReachLimit(uint32) bool
 	IsExpired() bool
 	GetKey() string
+	GetValue() string
 }
 
 type DefaultRecord struct {
@@ -52,6 +53,10 @@ func (r *DefaultRecord) IsExpired() bool {
 }
 
 func (r *DefaultRecord) GetKey() string {
+	return r.key
+}
+
+func (r *DefaultRecord) GetValue() string {
 	return r.key
 }
 
