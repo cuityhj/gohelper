@@ -8,6 +8,7 @@ import (
 
 type Record interface {
 	IsReachLimit(uint32) bool
+	IsExpired() bool
 	GetKey() string
 }
 
@@ -33,7 +34,7 @@ func (r *DefaultRecord) reset() {
 }
 
 func (r *DefaultRecord) IsReachLimit(limit uint32) bool {
-	if r.isExpire() {
+	if r.IsExpired() {
 		r.reset()
 		return false
 	}
@@ -46,7 +47,7 @@ func (r *DefaultRecord) IsReachLimit(limit uint32) bool {
 	return false
 }
 
-func (r *DefaultRecord) isExpire() bool {
+func (r *DefaultRecord) IsExpired() bool {
 	return r.expireTime.Before(time.Now())
 }
 
