@@ -2,23 +2,23 @@ package counter
 
 import "sync"
 
-type CounterUint8 struct {
+type Uint8Counter struct {
 	value uint8
 	lock  sync.Mutex
 }
 
-func NewCounterUint8() *CounterUint8 {
-	return &CounterUint8{}
+func NewUint8Counter() *Uint8Counter {
+	return &Uint8Counter{}
 }
 
-func (c *CounterUint8) GetNext() uint8 {
+func (c *Uint8Counter) GetNext() uint8 {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.value += 1
 	return c.value
 }
 
-func (c *CounterUint8) Reset() {
+func (c *Uint8Counter) Reset() {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	c.value = 0
