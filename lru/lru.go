@@ -71,7 +71,7 @@ func NewConcurrencyRecordStore(maxRecordCount uint32) *ConcurrencyRecordStore {
 	return &ConcurrencyRecordStore{
 		maxRecordCount: maxRecordCount,
 		lru:            list.New(),
-		records:        make(map[string]*list.Element),
+		records:        make(map[string]*list.Element, maxRecordCount+1),
 	}
 }
 
