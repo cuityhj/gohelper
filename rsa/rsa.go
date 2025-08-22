@@ -19,6 +19,14 @@ func ReadPublicKeyFromFile(fileName string) (*rsa.PublicKey, error) {
 	return ParsePublicKey(pubKeyPEM)
 }
 
+func ParseBase64PublicKey(base64PubKey string) (*rsa.PublicKey, error) {
+	if pubKeyPEM, err := base64.StdEncoding.DecodeString(base64PubKey); err != nil {
+		return nil, fmt.Errorf("base64 decode public key failed: %s", err.Error())
+	} else {
+		return ParsePublicKey(pubKeyPEM)
+	}
+}
+
 func ParsePublicKey(pubKeyPEM []byte) (*rsa.PublicKey, error) {
 	publicKey, err := parsePublicKey(pubKeyPEM)
 	if err != nil {
@@ -83,6 +91,14 @@ func ReadPrivateKeyFromFile(fileName string) (*rsa.PrivateKey, error) {
 	}
 
 	return ParsePrivateKey(privKeyPEM)
+}
+
+func ParseBase64PrivateKey(bas64PrivKey string) (*rsa.PrivateKey, error) {
+	if privateKeyPEM, err := base64.StdEncoding.DecodeString(bas64PrivKey); err != nil {
+		return nil, fmt.Errorf("base64 decode private key failed: %s", err.Error())
+	} else {
+		return ParsePrivateKey(privateKeyPEM)
+	}
 }
 
 func ParsePrivateKey(privKeyPEM []byte) (*rsa.PrivateKey, error) {
