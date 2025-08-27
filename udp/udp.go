@@ -39,6 +39,7 @@ func (cli *UDPClient) Exchange(request []byte, serverIp net.IP, serverPort uint3
 
 	conn.SetReadDeadline(time.Now().Add(cli.timeout))
 	buf := syncpool.GetBytePool().Get()
+	buf = buf[:syncpool.MaxDatagram]
 	defer syncpool.GetBytePool().Put(buf)
 	n, err := conn.Read(buf)
 	if err != nil {
