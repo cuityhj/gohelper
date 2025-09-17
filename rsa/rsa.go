@@ -33,8 +33,8 @@ func ParsePublicKey(pubKeyPEM []byte) (*rsa.PublicKey, error) {
 		return nil, err
 	}
 
-	if publicKey.N.BitLen() != 2048 {
-		return nil, fmt.Errorf("rsa public key is not 2048 bits")
+	if publicKey.N.BitLen() < 2048 {
+		return nil, fmt.Errorf("rsa public key is smaller than 2048 bits")
 	}
 
 	return publicKey, nil
@@ -107,8 +107,8 @@ func ParsePrivateKey(privKeyPEM []byte) (*rsa.PrivateKey, error) {
 		return nil, err
 	}
 
-	if privateKey.N.BitLen() != 2048 {
-		return nil, fmt.Errorf("rsa private key is not 2048 bits")
+	if privateKey.N.BitLen() < 2048 {
+		return nil, fmt.Errorf("rsa private key is smaller than 2048 bits")
 	}
 
 	return privateKey, nil
