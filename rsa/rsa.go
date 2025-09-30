@@ -78,7 +78,7 @@ func EncryptWithPublicPEM(plaintext string, pubKeyPEM []byte) (string, error) {
 func EncryptWithPublicKey(plaintext string, publicKey *rsa.PublicKey) (string, error) {
 	encryptedData, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, []byte(plaintext))
 	if err != nil {
-		return "", fmt.Errorf("rsa encode failed: %s", err.Error())
+		return "", fmt.Errorf("rsa public key encode failed: %s", err.Error())
 	}
 
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
@@ -152,12 +152,12 @@ func DecryptWithPrivatePEM(encryptedData string, privKeyPEM []byte) ([]byte, err
 func DecryptWithPrivateKey(encryptedData string, privateKey *rsa.PrivateKey) ([]byte, error) {
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decode failed: %s", err.Error())
+		return nil, fmt.Errorf("base64 decode encrypted data failed: %s", err.Error())
 	}
 
 	plaintext, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, ciphertext)
 	if err != nil {
-		return nil, fmt.Errorf("rsa decrypt data failed: %s", err.Error())
+		return nil, fmt.Errorf("rsa private key decrypt data failed: %s", err.Error())
 	}
 
 	return plaintext, nil
