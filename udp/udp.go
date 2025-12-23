@@ -1,12 +1,9 @@
 package udp
 
 import (
-	"bytes"
 	"fmt"
 	"net"
 	"time"
-
-	"github.com/cuityhj/gohelper/syncpool"
 )
 
 var DefaultTimeout = 10 * time.Second
@@ -25,7 +22,7 @@ func NewUDPClient(timeout time.Duration) *UDPClient {
 	return &UDPClient{timeout: timeout}
 }
 
-func (cli *UDPClient) Exchange(request []byte, serverIp net.IP, serverPort uint32, response *bytes.Buffer) error {
+func (cli *UDPClient) Exchange(request []byte, serverIp net.IP, serverPort uint32, response []byte) error {
 	conn, err := net.DialUDP("udp", nil, &net.UDPAddr{IP: serverIp, Port: int(serverPort)})
 	if err != nil {
 		return fmt.Errorf("dial udp with addr %s and port %d failed: %s", serverIp, serverPort, err.Error())
@@ -38,18 +35,12 @@ func (cli *UDPClient) Exchange(request []byte, serverIp net.IP, serverPort uint3
 	}
 
 	conn.SetReadDeadline(time.Now().Add(cli.timeout))
-	buf := syncpool.GetBytePool().Get()
-	buf = buf[:syncpool.MaxDatagram]
-	defer syncpool.GetBytePool().Put(buf)
-	n, err := conn.Read(buf)
+	n, err := conn.Read(response)
 	if err != nil {
 		return fmt.Errorf("read udp respsonse from addr %s and port %d failed: %s", serverIp, serverPort, err.Error())
 	}
 
-	if response != nil {
-		response.Write(buf[:n])
-	}
-
+	response = response[:n]
 	return nil
 }
 
