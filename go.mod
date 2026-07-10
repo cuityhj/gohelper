@@ -6,6 +6,7 @@ require (
 	github.com/cuityhj/cement v1.0.0
 	github.com/cuityhj/gorest v1.2.0
 	github.com/docker/docker v24.0.6+incompatible
+	github.com/tjfoc/gmsm v1.4.1
 	golang.org/x/crypto v0.31.0
 )
 
