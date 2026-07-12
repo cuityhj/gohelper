@@ -9,25 +9,23 @@ import (
 )
 
 func TestRSA(t *testing.T) {
-	privKey, err := GenerateRSAKeyPair(2048)
+	privKey, pubKey, err := GenerateRSAKeyPair(2048)
 	ut.Assert(t, err == nil, "generate private key failed")
 
-	pubKey := &privKey.PublicKey
-
 	password := []byte("admin@123")
-	encryptedPassword, err := Encrypt(pubKey, password)
+	encryptedPassword, err := pubKey.Encrypt(password)
 	ut.Assert(t, err == nil, "encrypt password with public key failed")
-	decryptedPassword, err := Decrypt(privKey, encryptedPassword)
+	decryptedPassword, err := privKey.Decrypt(encryptedPassword)
 	ut.Assert(t, err == nil, "decrypt password with private key failed")
 	ut.Assert(t, bytes.Equal(decryptedPassword, password), string(password))
 
 	privKeyFileName := "private.pem"
-	err = WritePrivateKeyToFile(privKey, privKeyFileName)
+	err = privKey.WriteToFile(privKeyFileName)
 	ut.Assert(t, err == nil, "write private key failed")
 	defer os.Remove(privKeyFileName)
 
 	pubKeyFileName := "public.pem"
-	err = WritePublicKeyToFile(pubKey, pubKeyFileName)
+	err = pubKey.WriteToFile(pubKeyFileName)
 	ut.Assert(t, err == nil, "write public key failed")
 	defer os.Remove(pubKeyFileName)
 
@@ -37,9 +35,9 @@ func TestRSA(t *testing.T) {
 	pubKey, err = LoadPublicKeyFromFile(pubKeyFileName)
 	ut.Assert(t, err == nil, "load public key failed")
 
-	encryptedPassword, err = Encrypt(pubKey, password)
+	encryptedPassword, err = pubKey.Encrypt(password)
 	ut.Assert(t, err == nil, "encrypt password with public key failed")
-	decryptedPassword, err = Decrypt(privKey, encryptedPassword)
+	decryptedPassword, err = privKey.Decrypt(encryptedPassword)
 	ut.Assert(t, err == nil, "decrypt password with private key failed")
 	ut.Assert(t, bytes.Equal(decryptedPassword, password), string(password))
 }

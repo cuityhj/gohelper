@@ -9,25 +9,23 @@ import (
 )
 
 func TestSM2(t *testing.T) {
-	privKey, err := GenerateSM2KeyPair()
+	privKey, pubKey, err := GenerateSM2KeyPair()
 	ut.Assert(t, err == nil, "generate sm2 key failed")
 
-	pubKey := &privKey.PublicKey
-
 	plaintext := []byte("this is a test plaintext for verifying SM2 encryption and decryption")
-	ciphertext, err := Encrypt(pubKey, plaintext)
+	ciphertext, err := pubKey.Encrypt(plaintext)
 	ut.Assert(t, err == nil, "sm2 encrypt failed")
-	decrypted, err := Decrypt(privKey, ciphertext)
+	decrypted, err := privKey.Decrypt(ciphertext)
 	ut.Assert(t, err == nil, "sm2 decrypt failed")
 	ut.Assert(t, bytes.Equal(decrypted, plaintext), "")
 
 	privKeyFileName := "sm2_priv.pem"
-	err = WritePrivateKeyToFile(privKey, privKeyFileName)
+	err = privKey.WriteToFile(privKeyFileName)
 	ut.Assert(t, err == nil, "write sm2 private key failed")
 	defer os.Remove(privKeyFileName)
 
 	pubKeyFileName := "sm2_pub.pem"
-	err = WritePublicKeyToFile(pubKey, pubKeyFileName)
+	err = pubKey.WriteToFile(pubKeyFileName)
 	ut.Assert(t, err == nil, "write sm2 public key failed")
 	defer os.Remove(pubKeyFileName)
 
@@ -37,9 +35,9 @@ func TestSM2(t *testing.T) {
 	pubKey, err = LoadPublicKeyFromFile(pubKeyFileName)
 	ut.Assert(t, err == nil, "load sm2 public key failed")
 
-	ciphertext, err = Encrypt(pubKey, plaintext)
+	ciphertext, err = pubKey.Encrypt(plaintext)
 	ut.Assert(t, err == nil, "sm2 encrypt failed")
-	decrypted, err = Decrypt(privKey, ciphertext)
+	decrypted, err = privKey.Decrypt(ciphertext)
 	ut.Assert(t, err == nil, "sm2 decrypt failed")
 	ut.Assert(t, bytes.Equal(decrypted, plaintext), "")
 }
