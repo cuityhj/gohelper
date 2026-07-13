@@ -10,9 +10,9 @@ import (
 	"io"
 )
 
-func CBCEncrypt(key, plaintextStr string) (string, error) {
+func CBCEncrypt(key []byte, plaintextStr string) (string, error) {
 	plaintext := PKCS5Padding([]byte(plaintextStr), aes.BlockSize)
-	block, err := aes.NewCipher([]byte(key))
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return "", err
 	}
@@ -28,30 +28,30 @@ func CBCEncrypt(key, plaintextStr string) (string, error) {
 	return base64.URLEncoding.EncodeToString(ciphertext), nil
 }
 
-func CBCDecrypt(key, ciphertextStr string) (string, error) {
+func CBCDecrypt(key []byte, ciphertextStr string) ([]byte, error) {
 	ciphertext, err := base64.URLEncoding.DecodeString(ciphertextStr)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	block, err := aes.NewCipher([]byte(key))
+	block, err := aes.NewCipher(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(ciphertext) < aes.BlockSize {
-		return "", errors.New("ciphertext is shorter than aes block size")
+		return nil, errors.New("ciphertext is shorter than aes block size")
 	}
 
 	iv := ciphertext[:aes.BlockSize]
 	ciphertext = ciphertext[aes.BlockSize:]
 	if len(ciphertext)%aes.BlockSize != 0 {
-		return "", errors.New("ciphertext is not a multiple of the aes block size")
+		return nil, errors.New("ciphertext is not a multiple of the aes block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, iv)
 	mode.CryptBlocks(ciphertext, ciphertext)
-	return string(PKCS5UnPadding(ciphertext)), nil
+	return PKCS5UnPadding(ciphertext), nil
 }
 
 func PKCS5Padding(plaintext []byte, blockSize int) []byte {

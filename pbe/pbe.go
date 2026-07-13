@@ -8,7 +8,9 @@ import (
 )
 
 const (
-	DefaultIterator = 10000
+	DEFAULT_ITERATOR = 10000
+
+	AES_256_KEY_SIZE = 32
 )
 
 var (
@@ -22,16 +24,16 @@ type DecryptContext struct {
 	Iterator         int
 }
 
-func Decrypt(ctx *DecryptContext) (string, error) {
+func Decrypt(ctx *DecryptContext) ([]byte, error) {
 	keyFactory, err := base64.StdEncoding.DecodeString(ctx.KeyFactoryBase64)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	rootKey := string(pbkdf2.Key(rootVector, keyFactory, ctx.Iterator, sha512.BlockSize, sha512.New))
-	decryptWorkKey, err := CBCDecrypt(rootKey[:32], ctx.EncryptWorkKey)
+	rootKey := pbkdf2.Key(rootVector, keyFactory, ctx.Iterator, sha512.BlockSize, sha512.New)
+	decryptWorkKey, err := CBCDecrypt(rootKey[:AES_256_KEY_SIZE], ctx.EncryptWorkKey)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	return CBCDecrypt(decryptWorkKey, ctx.Ciphertext)
@@ -50,13 +52,13 @@ func Encrypt(ctx *EncryptContext) (*DecryptContext, error) {
 		return nil, err
 	}
 
-	rootKey := string(pbkdf2.Key(rootVector, keyFactory, ctx.Iterator, sha512.BlockSize, sha512.New))
-	encryptWorkKey, err := CBCEncrypt(rootKey[:32], ctx.WorkKey)
+	rootKey := pbkdf2.Key(rootVector, keyFactory, ctx.Iterator, sha512.BlockSize, sha512.New)
+	encryptWorkKey, err := CBCEncrypt(rootKey[:AES_256_KEY_SIZE], ctx.WorkKey)
 	if err != nil {
 		return nil, err
 	}
 
-	ciphertext, err := CBCEncrypt(ctx.WorkKey, ctx.Plaintext)
+	ciphertext, err := CBCEncrypt([]byte(ctx.WorkKey), ctx.Plaintext)
 	if err != nil {
 		return nil, err
 	}
