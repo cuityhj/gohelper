@@ -18,7 +18,7 @@ var (
 type DecryptContext struct {
 	KeyFactoryBase64 string
 	EncryptWorkKey   string
-	EncryptPassword  string
+	Ciphertext       string
 	Iterator         int
 }
 
@@ -34,13 +34,13 @@ func Decrypt(ctx *DecryptContext) (string, error) {
 		return "", err
 	}
 
-	return CBCDecrypt(decryptWorkKey, ctx.EncryptPassword)
+	return CBCDecrypt(decryptWorkKey, ctx.Ciphertext)
 }
 
 type EncryptContext struct {
 	KeyFactoryBase64 string
 	WorkKey          string
-	Password         string
+	Plaintext        string
 	Iterator         int
 }
 
@@ -56,7 +56,7 @@ func Encrypt(ctx *EncryptContext) (*DecryptContext, error) {
 		return nil, err
 	}
 
-	encryptPassword, err := CBCEncrypt(ctx.WorkKey, ctx.Password)
+	ciphertext, err := CBCEncrypt(ctx.WorkKey, ctx.Plaintext)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func Encrypt(ctx *EncryptContext) (*DecryptContext, error) {
 	return &DecryptContext{
 		KeyFactoryBase64: ctx.KeyFactoryBase64,
 		EncryptWorkKey:   encryptWorkKey,
-		EncryptPassword:  encryptPassword,
+		Ciphertext:       ciphertext,
 		Iterator:         ctx.Iterator,
 	}, nil
 }
