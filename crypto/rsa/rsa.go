@@ -132,6 +132,10 @@ func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
 	return base64.StdEncoding.EncodeToString(encryptedData), nil
 }
 
+func (priv *PrivateKey) Public() *PublicKey {
+	return (*PublicKey)(&priv.PublicKey)
+}
+
 func (priv *PrivateKey) WriteToFile(fileName string) error {
 	privKeyFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {

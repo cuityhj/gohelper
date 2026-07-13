@@ -187,6 +187,10 @@ func newAESGCMAndNONCE(sharedSecret []byte) (cipher.AEAD, []byte, error) {
 	return gcm, nonce, nil
 }
 
+func (priv *PrivateKey) Public() *PublicKey {
+	return (*PublicKey)(&priv.PublicKey)
+}
+
 func (priv *PrivateKey) WriteToFile(fileName string) error {
 	privKeyFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
