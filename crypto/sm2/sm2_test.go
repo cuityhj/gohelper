@@ -13,6 +13,11 @@ func TestSM2(t *testing.T) {
 	ut.Assert(t, err == nil, "generate sm2 key failed")
 
 	plaintext := []byte("this is a test plaintext for verifying SM2 encryption and decryption")
+
+	sign, err := privKey.Sign(plaintext)
+	ut.Assert(t, err == nil, "sm2 sign failed")
+	succeed, err := pubKey.Verify(plaintext, sign)
+	ut.Assert(t, err == nil && succeed, "sm2 verify failed")
 	ciphertext, err := pubKey.Encrypt(plaintext)
 	ut.Assert(t, err == nil, "sm2 encrypt failed")
 	decrypted, err := privKey.Decrypt(ciphertext)
@@ -35,6 +40,10 @@ func TestSM2(t *testing.T) {
 	pubKey, err = LoadPublicKeyFromFile(pubKeyFileName)
 	ut.Assert(t, err == nil, "load sm2 public key failed")
 
+	sign, err = privKey.Sign(plaintext)
+	ut.Assert(t, err == nil, "sm2 sign failed")
+	succeed, err = pubKey.Verify(plaintext, sign)
+	ut.Assert(t, err == nil && succeed, "sm2 verify failed")
 	ciphertext, err = pubKey.Encrypt(plaintext)
 	ut.Assert(t, err == nil, "sm2 encrypt failed")
 	decrypted, err = privKey.Decrypt(ciphertext)

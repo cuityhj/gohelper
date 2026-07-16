@@ -22,44 +22,69 @@ const (
 
 var sm2Curve = sm2.P256Sm2()
 
-type (
-	PrivateKey sm2.PrivateKey
-	PublicKey  sm2.PublicKey
-)
+type PrivateKey struct {
+	*sm2.PrivateKey
+}
+
+type PublicKey struct {
+	*sm2.PublicKey
+}
 
 func GenerateSM2KeyPair() (*PrivateKey, *PublicKey, error) {
 	if privKey, err := sm2.GenerateKey(rand.Reader); err != nil {
 		return nil, nil, err
 	} else {
-		return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey), nil
+		return &PrivateKey{PrivateKey: privKey}, &PublicKey{PublicKey: &privKey.PublicKey}, nil
 	}
 }
 
-func (pub *PublicKey) ToHex() string {
-	return fmt.Sprintf("04%064x%064x", pub.X, pub.Y)
+func (priv *PrivateKey) Sign(msg []byte) (string, error) {
+	if len(msg) == 0 {
+		return "", fmt.Errorf("message cannot be empty")
+	}
+
+	sign, err := priv.PrivateKey.Sign(rand.Reader, msg, nil)
+	if err != nil {
+		return "", fmt.Errorf("sm2 private key sign failed: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(sign), nil
+}
+
+func (pub *PublicKey) Verify(msg []byte, encryptedSign string) (bool, error) {
+	if len(msg) == 0 || len(encryptedSign) == 0 {
+		return false, fmt.Errorf("sign or message cannot be empty")
+	}
+
+	sign, err := base64.StdEncoding.DecodeString(encryptedSign)
+	if err != nil {
+		return false, fmt.Errorf("base64 decode sign failed: %w", err)
+	}
+
+	return pub.PublicKey.Verify(msg, sign), nil
 }
 
 func (pub *PublicKey) WriteToFile(fileName string) error {
 	pubKeyPEM, err := pub.ToPEM()
 	if err != nil {
-		return fmt.Errorf("write public key to pem failed: %s", err.Error())
+		return fmt.Errorf("write public key to pem failed: %w", err)
 	}
 
 	if err := os.WriteFile(fileName, pubKeyPEM, 0644); err != nil {
-		return fmt.Errorf("write public key pem to file failed: %s", err.Error())
+		return fmt.Errorf("write public key pem to file failed: %w", err)
 	}
 
 	return nil
 }
 
 func (pub *PublicKey) ToPEM() ([]byte, error) {
-	return x509.WritePublicKeyToPem((*sm2.PublicKey)(pub))
+	return x509.WritePublicKeyToPem(pub.PublicKey)
 }
 
 func LoadPublicKeyFromFile(fileName string) (*PublicKey, error) {
 	pubKeyPEM, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read sm2 public key file failed: %s", err.Error())
+		return nil, fmt.Errorf("read sm2 public key file failed: %w", err)
 	}
 
 	return ParsePublicKey(pubKeyPEM)
@@ -72,10 +97,10 @@ func ParsePublicKey(pubKeyPEM []byte) (*PublicKey, error) {
 
 	pubKey, err := x509.ReadPublicKeyFromPem(pubKeyPEM)
 	if err != nil {
-		return nil, fmt.Errorf("gmsm x509 parse public key failed: %s", err.Error())
+		return nil, fmt.Errorf("gmsm x509 parse public key failed: %w", err)
 	}
 
-	return (*PublicKey)(pubKey), nil
+	return &PublicKey{pubKey}, nil
 }
 
 func EncryptWithPublicPEM(plaintext string, pubKeyPEM []byte) (string, error) {
@@ -96,9 +121,9 @@ func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
 		return "", fmt.Errorf("plaintext cannot be empty")
 	}
 
-	rawCipher, err := sm2.Encrypt((*sm2.PublicKey)(pub), plaintext, rand.Reader, sm2.C1C3C2)
+	rawCipher, err := sm2.Encrypt(pub.PublicKey, plaintext, rand.Reader, sm2.C1C3C2)
 	if err != nil {
-		return "", fmt.Errorf("sm2 encrypt plaintext failed: %s", err.Error())
+		return "", fmt.Errorf("sm2 encrypt plaintext failed: %w", err)
 	}
 
 	compressedCipher, err := compressSM2Ciphertext(rawCipher)
@@ -107,6 +132,28 @@ func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
 	}
 
 	return base64.StdEncoding.EncodeToString(compressedCipher), nil
+}
+
+func EncryptAsn1WithPublicPEM(plaintext string, pubKeyPEM []byte) (string, error) {
+	if len(plaintext) == 0 || len(pubKeyPEM) == 0 {
+		return "", fmt.Errorf("plaintext or public pem cannot be empty")
+	}
+
+	pubKey, err := ParsePublicKey(pubKeyPEM)
+	if err != nil {
+		return "", err
+	}
+
+	return pubKey.EncryptAsn1([]byte(plaintext))
+}
+
+func (pub *PublicKey) EncryptAsn1(plaintext []byte) (string, error) {
+	ciphertext, err := pub.PublicKey.EncryptAsn1(plaintext, rand.Reader)
+	if err != nil {
+		return "", fmt.Errorf("sm2 encrypt asn.1 plaintext failed: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
 func compressSM2Ciphertext(ciphertext []byte) ([]byte, error) {
@@ -127,34 +174,34 @@ func compressSM2Ciphertext(ciphertext []byte) ([]byte, error) {
 }
 
 func (priv *PrivateKey) Public() *PublicKey {
-	return (*PublicKey)(&priv.PublicKey)
+	return &PublicKey{&priv.PrivateKey.PublicKey}
 }
 
 func (priv *PrivateKey) WriteToFile(fileName string) error {
 	privKeyPEM, err := priv.ToPEM()
 	if err != nil {
-		return fmt.Errorf("write private key to pem failed: %s", err.Error())
+		return fmt.Errorf("write private key to pem failed: %w", err)
 	}
 
 	if err := os.WriteFile(fileName, privKeyPEM, 0600); err != nil {
-		return fmt.Errorf("write private key pem to file failed: %s", err.Error())
+		return fmt.Errorf("write private key pem to file failed: %w", err)
 	}
 
 	return nil
 }
 
 func (priv *PrivateKey) ToPEM() ([]byte, error) {
-	return x509.WritePrivateKeyToPem((*sm2.PrivateKey)(priv), nil)
+	return x509.WritePrivateKeyToPem(priv.PrivateKey, nil)
 }
 
 func (priv *PrivateKey) WriteEncryptedToFile(fileName string, password []byte) error {
 	privKeyPEM, err := priv.ToEncryptedPEM(password)
 	if err != nil {
-		return fmt.Errorf("write private key to pem failed: %s", err.Error())
+		return fmt.Errorf("write private key to pem failed: %w", err)
 	}
 
 	if err := os.WriteFile(fileName, privKeyPEM, 0600); err != nil {
-		return fmt.Errorf("write private key pem to file failed: %s", err.Error())
+		return fmt.Errorf("write private key pem to file failed: %w", err)
 	}
 
 	return nil
@@ -165,13 +212,13 @@ func (priv *PrivateKey) ToEncryptedPEM(password []byte) ([]byte, error) {
 		return nil, fmt.Errorf("password cannot be empty")
 	}
 
-	return x509.WritePrivateKeyToPem((*sm2.PrivateKey)(priv), password)
+	return x509.WritePrivateKeyToPem(priv.PrivateKey, password)
 }
 
 func LoadPrivateKeyFromFile(fileName string) (*PrivateKey, error) {
 	privKeyPEM, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read sm2 private key file failed: %s", err.Error())
+		return nil, fmt.Errorf("read sm2 private key file failed: %w", err)
 	}
 
 	return ParsePrivateKey(privKeyPEM)
@@ -184,10 +231,10 @@ func ParsePrivateKey(privKeyPEM []byte) (*PrivateKey, error) {
 
 	privKey, err := x509.ReadPrivateKeyFromPem(privKeyPEM, nil)
 	if err != nil {
-		return nil, fmt.Errorf("gmsm x509 parse private key failed: %s", err.Error())
+		return nil, fmt.Errorf("gmsm x509 parse private key failed: %w", err)
 	}
 
-	return (*PrivateKey)(privKey), nil
+	return &PrivateKey{privKey}, nil
 }
 
 func LoadEncryptedPrivateKeyFromFile(fileName string, password []byte) (*PrivateKey, error) {
@@ -197,7 +244,7 @@ func LoadEncryptedPrivateKeyFromFile(fileName string, password []byte) (*Private
 
 	privKeyPEM, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read sm2 private key file failed: %s", err.Error())
+		return nil, fmt.Errorf("read sm2 private key file failed: %w", err)
 	}
 
 	return ParseEncryptedPrivateKey(privKeyPEM, password)
@@ -210,10 +257,10 @@ func ParseEncryptedPrivateKey(privKeyPEM, password []byte) (*PrivateKey, error) 
 
 	privKey, err := x509.ReadPrivateKeyFromPem(privKeyPEM, password)
 	if err != nil {
-		return nil, fmt.Errorf("gmsm x509 parse private key failed: %s", err.Error())
+		return nil, fmt.Errorf("gmsm x509 parse private key failed: %w", err)
 	}
 
-	return (*PrivateKey)(privKey), nil
+	return &PrivateKey{privKey}, nil
 }
 
 func DecryptWithPrivatePEM(encryptedData string, privKeyPEM []byte) ([]byte, error) {
@@ -249,20 +296,20 @@ func (priv *PrivateKey) Decrypt(encryptedData string) ([]byte, error) {
 
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decode encrypted data failed: %s", err.Error())
+		return nil, fmt.Errorf("base64 decode encrypted data failed: %w", err)
 	}
 
 	rawCipher := ciphertext
 	if len(ciphertext) > 0 && (ciphertext[0] == 0x02 || ciphertext[0] == 0x03) {
 		rawCipher, err = decompressSM2Ciphertext(ciphertext)
 		if err != nil {
-			return nil, fmt.Errorf("decompress sm2 ciphertext failed: %s", err.Error())
+			return nil, fmt.Errorf("decompress sm2 ciphertext failed: %w", err)
 		}
 	}
 
-	plaintext, err := sm2.Decrypt((*sm2.PrivateKey)(priv), rawCipher, sm2.C1C3C2)
+	plaintext, err := sm2.Decrypt(priv.PrivateKey, rawCipher, sm2.C1C3C2)
 	if err != nil {
-		return nil, fmt.Errorf("sm2 decrypt ciphertext failed: %s", err.Error())
+		return nil, fmt.Errorf("sm2 decrypt ciphertext failed: %w", err)
 	}
 
 	return plaintext, nil
@@ -283,4 +330,48 @@ func decompressSM2Ciphertext(ciphertext []byte) ([]byte, error) {
 	copy(result[:len(c1Raw)], c1Raw)
 	copy(result[len(c1Raw):], ciphertext[SM2_COMPRESSED_C1_LENGTH:])
 	return result, nil
+}
+
+func DecryptAsn1WithPrivatePEM(encryptedData string, privKeyPEM []byte) ([]byte, error) {
+	if len(encryptedData) == 0 || len(privKeyPEM) == 0 {
+		return nil, fmt.Errorf("ciphertext or private pem cannot be empty")
+	}
+
+	privKey, err := ParsePrivateKey(privKeyPEM)
+	if err != nil {
+		return nil, err
+	}
+
+	return privKey.DecryptAsn1(encryptedData)
+}
+
+func DecryptAsn1WithEncryptedPrivatePEM(encryptedData string, privKeyPEM, password []byte) ([]byte, error) {
+	if len(encryptedData) == 0 || len(privKeyPEM) == 0 || len(password) == 0 {
+		return nil, fmt.Errorf("ciphertext or private pem or password cannot be empty")
+	}
+
+	privKey, err := ParseEncryptedPrivateKey(privKeyPEM, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return privKey.DecryptAsn1(encryptedData)
+}
+
+func (priv *PrivateKey) DecryptAsn1(encryptedData string) ([]byte, error) {
+	if len(encryptedData) == 0 {
+		return nil, fmt.Errorf("ciphertext cannot be empty")
+	}
+
+	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
+	if err != nil {
+		return nil, fmt.Errorf("base64 decode encrypted data failed: %w", err)
+	}
+
+	plaintext, err := priv.PrivateKey.DecryptAsn1(ciphertext)
+	if err != nil {
+		return nil, fmt.Errorf("sm2 decrypt asn.1 ciphertext failed: %w", err)
+	}
+
+	return plaintext, nil
 }

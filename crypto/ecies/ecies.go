@@ -32,30 +32,33 @@ var (
 	ecCurve = elliptic.P256()
 )
 
-type (
-	PrivateKey ecdsa.PrivateKey
-	PublicKey  ecdsa.PublicKey
-)
+type PrivateKey struct {
+	*ecdsa.PrivateKey
+}
+
+type PublicKey struct {
+	*ecdsa.PublicKey
+}
 
 func GenerateECIESKeyPair() (*PrivateKey, *PublicKey, error) {
 	if privKey, err := ecdsa.GenerateKey(ecCurve, rand.Reader); err != nil {
 		return nil, nil, err
 	} else {
-		return (*PrivateKey)(privKey), (*PublicKey)(&privKey.PublicKey), nil
+		return &PrivateKey{privKey}, &PublicKey{&privKey.PublicKey}, nil
 	}
 }
 
 func (pub *PublicKey) WriteToFile(fileName string) error {
 	pubKeyFile, err := os.Create(fileName)
 	if err != nil {
-		return fmt.Errorf("create public key file failed: %s", err.Error())
+		return fmt.Errorf("create public key file failed: %w", err)
 	}
 
 	defer pubKeyFile.Close()
 
-	pubKeyDER, err := x509.MarshalPKIXPublicKey((*ecdsa.PublicKey)(pub))
+	pubKeyDER, err := x509.MarshalPKIXPublicKey(pub.PublicKey)
 	if err != nil {
-		return fmt.Errorf("x509 marshal public key failed: %s", err.Error())
+		return fmt.Errorf("x509 marshal public key failed: %w", err)
 	}
 
 	pubKeyPEM := &pem.Block{
@@ -63,7 +66,7 @@ func (pub *PublicKey) WriteToFile(fileName string) error {
 		Bytes: pubKeyDER,
 	}
 	if err := pem.Encode(pubKeyFile, pubKeyPEM); err != nil {
-		return fmt.Errorf("write public key to file failed: %s", err.Error())
+		return fmt.Errorf("write public key to file failed: %w", err)
 	}
 
 	return nil
@@ -72,7 +75,7 @@ func (pub *PublicKey) WriteToFile(fileName string) error {
 func LoadPublicKeyFromFile(fileName string) (*PublicKey, error) {
 	pubKeyPEM, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read public key failed: %s", err.Error())
+		return nil, fmt.Errorf("read public key failed: %w", err)
 	}
 
 	return ParsePublicKey(pubKeyPEM)
@@ -103,7 +106,7 @@ func ParsePublicKey(pubKeyPEM []byte) (*PublicKey, error) {
 
 	publicKey, err := x509.ParsePKIXPublicKey(pubKeyBlock.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("x509 parse public key failed: %s", err.Error())
+		return nil, fmt.Errorf("x509 parse public key failed: %w", err)
 	}
 
 	pubKey, ok := publicKey.(*ecdsa.PublicKey)
@@ -111,7 +114,7 @@ func ParsePublicKey(pubKeyPEM []byte) (*PublicKey, error) {
 		return nil, fmt.Errorf("public key is not ecdsa key")
 	}
 
-	return (*PublicKey)(pubKey), nil
+	return &PublicKey{pubKey}, nil
 }
 
 func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
@@ -121,10 +124,10 @@ func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
 
 	ephemeralPriv, err := ecdsa.GenerateKey(ecCurve, rand.Reader)
 	if err != nil {
-		return "", fmt.Errorf("ecdsa generate private key failed: %s", err.Error())
+		return "", fmt.Errorf("ecdsa generate private key failed: %w", err)
 	}
 
-	sharedSecret, err := ecdhDeriveSharedSecret(ephemeralPriv, (*ecdsa.PublicKey)(pub))
+	sharedSecret, err := ecdhDeriveSharedSecret(ephemeralPriv, pub.PublicKey)
 	if err != nil {
 		return "", err
 	}
@@ -146,17 +149,17 @@ func (pub *PublicKey) Encrypt(plaintext []byte) (string, error) {
 func ecdhDeriveSharedSecret(privKey *ecdsa.PrivateKey, pubKey *ecdsa.PublicKey) ([]byte, error) {
 	ecdhPriv, err := privKey.ECDH()
 	if err != nil {
-		return nil, fmt.Errorf("ecdsa private key ecdh failed: %s", err.Error())
+		return nil, fmt.Errorf("ecdsa private key ecdh failed: %w", err)
 	}
 
 	ecdhPub, err := pubKey.ECDH()
 	if err != nil {
-		return nil, fmt.Errorf("ecdsa public key ecdh failed: %s", err.Error())
+		return nil, fmt.Errorf("ecdsa public key ecdh failed: %w", err)
 	}
 
 	sharedSecret, err := ecdhPriv.ECDH(ecdhPub)
 	if err != nil {
-		return nil, fmt.Errorf("ecdh generate shared secret failed: %s", err.Error())
+		return nil, fmt.Errorf("ecdh generate shared secret failed: %w", err)
 	}
 
 	return sharedSecret, nil
@@ -167,41 +170,41 @@ func newAESGCMAndNONCE(sharedSecret []byte) (cipher.AEAD, []byte, error) {
 	key := make([]byte, AES_KEY_LENGTH)
 	nonce := make([]byte, GCM_NONCE_LENGTH)
 	if _, err := hkdfReader.Read(key); err != nil {
-		return nil, nil, fmt.Errorf("hkdf read aes key failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("hkdf read aes key failed: %w", err)
 	}
 
 	if _, err := hkdfReader.Read(nonce); err != nil {
-		return nil, nil, fmt.Errorf("hkdf read gcm nonce failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("hkdf read gcm nonce failed: %w", err)
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, nil, fmt.Errorf("aes new cipher failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("aes new cipher failed: %w", err)
 	}
 
 	gcm, err := cipher.NewGCM(block)
 	if err != nil {
-		return nil, nil, fmt.Errorf("aes new gcm failed: %s", err.Error())
+		return nil, nil, fmt.Errorf("aes new gcm failed: %w", err)
 	}
 
 	return gcm, nonce, nil
 }
 
 func (priv *PrivateKey) Public() *PublicKey {
-	return (*PublicKey)(&priv.PublicKey)
+	return &PublicKey{&priv.PrivateKey.PublicKey}
 }
 
 func (priv *PrivateKey) WriteToFile(fileName string) error {
 	privKeyFile, err := os.OpenFile(fileName, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600)
 	if err != nil {
-		return fmt.Errorf("create private key file failed: %s", err.Error())
+		return fmt.Errorf("create private key file failed: %w", err)
 	}
 
 	defer privKeyFile.Close()
 
-	privKeyDER, err := x509.MarshalPKCS8PrivateKey((*ecdsa.PrivateKey)(priv))
+	privKeyDER, err := x509.MarshalPKCS8PrivateKey(priv.PrivateKey)
 	if err != nil {
-		return fmt.Errorf("x509 marshal private key failed: %s", err.Error())
+		return fmt.Errorf("x509 marshal private key failed: %w", err)
 	}
 
 	privKeyPEM := &pem.Block{
@@ -209,7 +212,7 @@ func (priv *PrivateKey) WriteToFile(fileName string) error {
 		Bytes: privKeyDER,
 	}
 	if err := pem.Encode(privKeyFile, privKeyPEM); err != nil {
-		return fmt.Errorf("write private key to file failed: %s", err.Error())
+		return fmt.Errorf("write private key to file failed: %w", err)
 	}
 
 	return nil
@@ -218,7 +221,7 @@ func (priv *PrivateKey) WriteToFile(fileName string) error {
 func LoadPrivateKeyFromFile(fileName string) (*PrivateKey, error) {
 	privKeyPEM, err := os.ReadFile(fileName)
 	if err != nil {
-		return nil, fmt.Errorf("read private key failed: %s", err.Error())
+		return nil, fmt.Errorf("read private key failed: %w", err)
 	}
 
 	return ParsePrivateKey(privKeyPEM)
@@ -249,7 +252,7 @@ func ParsePrivateKey(privKeyPEM []byte) (*PrivateKey, error) {
 
 	privateKey, err := x509.ParsePKCS8PrivateKey(privKeyBlock.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("x509 parse private key failed: %s", err.Error())
+		return nil, fmt.Errorf("x509 parse private key failed: %w", err)
 	}
 
 	privKey, ok := privateKey.(*ecdsa.PrivateKey)
@@ -257,7 +260,7 @@ func ParsePrivateKey(privKeyPEM []byte) (*PrivateKey, error) {
 		return nil, fmt.Errorf("private key is not ecdsa key")
 	}
 
-	return (*PrivateKey)(privKey), nil
+	return &PrivateKey{privKey}, nil
 }
 
 func (priv *PrivateKey) Decrypt(encryptedData string) ([]byte, error) {
@@ -267,7 +270,7 @@ func (priv *PrivateKey) Decrypt(encryptedData string) ([]byte, error) {
 
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedData)
 	if err != nil {
-		return nil, fmt.Errorf("base64 decode encrypted data failed: %s", err.Error())
+		return nil, fmt.Errorf("base64 decode encrypted data failed: %w", err)
 	}
 
 	if len(ciphertext) < COMPRESSED_PUB_LENGTH {
@@ -281,7 +284,7 @@ func (priv *PrivateKey) Decrypt(encryptedData string) ([]byte, error) {
 		return nil, fmt.Errorf("invalid compressed public key")
 	}
 
-	sharedSecret, err := ecdhDeriveSharedSecret((*ecdsa.PrivateKey)(priv), &ecdsa.PublicKey{Curve: ecCurve, X: x, Y: y})
+	sharedSecret, err := ecdhDeriveSharedSecret(priv.PrivateKey, &ecdsa.PublicKey{Curve: ecCurve, X: x, Y: y})
 	if err != nil {
 		return nil, err
 	}
@@ -293,7 +296,7 @@ func (priv *PrivateKey) Decrypt(encryptedData string) ([]byte, error) {
 
 	plaintext, err := gcm.Open(nil, nonce, symCiphertext, nil)
 	if err != nil {
-		return nil, fmt.Errorf("gcm decrypt ciphertext failed: %s", err.Error())
+		return nil, fmt.Errorf("gcm decrypt ciphertext failed: %w", err)
 	}
 
 	return plaintext, nil
